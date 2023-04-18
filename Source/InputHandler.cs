@@ -11,27 +11,22 @@
             this.logger = logger;
             scheduler = inputScheduler;
             logger.LogInformation($"InputHandler has finished constructing.");
-            ProcessInputs();
+            var processThread = new Thread(new ThreadStart(StartProcessing));
+            processThread.Start();
         }
 
-        private void ProcessInputs()
+        // Starts a timer using the tickrate defined in the settings to process the inputs from the InputScheduler
+        void StartProcessing()
         {
-            DateTime lastTick = DateTime.Now;
-            double tickRate = AppSettings.GetValue<Double>("Server:TickRate");
+            var tickRate = (1/AppSettings.GetValue<double>("Server:TickRate"));
+            var tickTimer = new Timer(ProcessInputs, null, TimeSpan.Zero, TimeSpan.FromSeconds(tickRate));
+        }
 
-            while (true)
-            {
-                // Check if the next tick should occur
-                if(DateTime.Now.Subtract(lastTick).TotalSeconds > (1/tickRate)) {
-                    lastTick = DateTime.Now;
+        private void ProcessInputs(object? state)
+        {
+            var tickInput = scheduler.DequeueInput();
 
-                    var tickInput = scheduler.DequeueInput();
-                    foreach(var input in tickInput )
-                    {
-                        // Handle each input
-                    }
-                }
-            }
+            // Handle inputs
         }
     }
 }

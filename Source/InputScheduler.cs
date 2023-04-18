@@ -1,34 +1,45 @@
-﻿namespace GameServer.Source
+﻿using GameLibrary;
+
+namespace GameServer.Source
 {
     public sealed class InputScheduler
     {
         readonly ILogger<InputScheduler> logger;
 
-        // Queue to store incoming inputs
-        private Queue<object> inputQueue;
+        Queue<InputObject> inputQueue;
+        int diagnosticInterval;
+        int inputCount;
 
-        // Lock object for thread safety
-        private readonly object queueLock = new object();
+        readonly object queueLock = new object();
 
-        // Private constructor to prevent external instantiation
         public InputScheduler(ILogger<InputScheduler> logger)
         {
             this.logger = logger;
-            inputQueue = new Queue<object>();
+            inputQueue = new Queue<InputObject>();
+            diagnosticInterval = 60;
+            var diagnosticTimer = new Timer(ReportDiagnostics, null, TimeSpan.Zero, TimeSpan.FromSeconds(diagnosticInterval));
             logger.LogInformation($"InputScheduler has finished constructing.");
         }
 
-        // Enqueues a QueuedInput object onto the input queue
-        public void EnqueueInput(object input)
+        private void ReportDiagnostics(object? state)
+        {
+            lock(queueLock)
+            {
+                logger.LogInformation($"Received {inputCount} inputs in the last {diagnosticInterval}s.");
+                inputCount = 0;
+            }
+        }
+
+        public void EnqueueInput(InputObject input)
         {
             lock (queueLock)
             {
                 inputQueue.Enqueue(input);
+                inputCount++;
             }
         }
 
-        // Dequeues and returns the next input from the input queue
-        public Queue<object> DequeueInput()
+        public Queue<InputObject> DequeueInput()
         {
             lock (queueLock)
             {
@@ -38,7 +49,6 @@
             }
         }
 
-        // Returns the number of inputs currently in the input queue
         public int GetInputQueueCount()
         {
             lock (queueLock)

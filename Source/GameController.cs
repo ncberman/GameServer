@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.ConstrainedExecution;
 using System.Text;
+using GameLibrary;
 using Newtonsoft.Json;
 
 namespace GameServer.Source
@@ -57,15 +58,18 @@ namespace GameServer.Source
             if (client == null) return;
             TcpClient tcpClient = (TcpClient)client;
             NetworkStream clientStream = tcpClient.GetStream();
+            var rateLimiter = new RateLimiter(threshold: AppSettings.GetValue<int>("Server:TickRate"), TimeSpan.FromSeconds(1));
 
             while (true)
             {
+                // Disconnect client if they are sending too many requests
+                if (!rateLimiter.CheckLimit()) break;
+
                 byte[] message = new byte[4096];
                 int bytesRead;
 
                 try
                 {
-                    // Read the incoming message from the client
                     bytesRead = clientStream.Read(message, 0, 4096);
                 }
                 catch (Exception ex)
@@ -85,7 +89,7 @@ namespace GameServer.Source
                 logger.LogInformation($"Received data: {data}");
 
                 // Deserialize the received message into an object
-                object? input = JsonConvert.DeserializeObject<object>(data);
+                InputObject? input = JsonConvert.DeserializeObject<InputObject>(data);
                 if (input == null) { continue; }
 
                 // Add the input to the scheduler

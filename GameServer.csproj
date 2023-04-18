@@ -14,4 +14,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="GameLibrary">
+      <HintPath>..\GameLibrary\bin\Debug\net7.0\GameLibrary.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
