@@ -5,6 +5,9 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
+COPY keyfile.json /app/keyfile.json
+ENV GOOGLE_APPLICATIONS_CREDENTIALS /app/keyfile.json
+
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["GameServer.csproj", "."]

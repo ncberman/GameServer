@@ -1,107 +1,133 @@
-﻿using System.Diagnostics;
+﻿using Common.Logging;
+using GameLibrary;
+using GameLibrary.Request;
+using GameServer.Source.Exceptions;
+using GameServer.Source.Models;
+using GameServer.Source.Services;
+using GameServer.Source.Util;
+using Newtonsoft.Json;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.ConstrainedExecution;
 using System.Text;
-using GameLibrary;
-using Newtonsoft.Json;
 
 namespace GameServer.Source
 {
     public sealed class GameController
     {
-        readonly ILogger<GameController> logger;
-
-        private readonly object connectionLock = new object();
+        private static readonly ILog Logger = LogManager.GetLogger<ConnectedUser>();
 
         readonly TcpListener tcpListener;
-        readonly Thread listenerThread;
-        readonly InputScheduler scheduler;
+        Thread listenerThread;
+        readonly RequestScheduler scheduler;
         readonly int port = AppSettings.GetValue<Int32>("Server:Port");
 
-        int numConnections;
-        readonly int maxConnections = AppSettings.GetValue<Int32>("Server:MaxConnections");
+        long numConnections;
+        bool isListening = false;
+        readonly long maxConnections = AppSettings.GetValue<Int32>("Server:MaxConnections");
 
-        public GameController(ILogger<GameController> logger, InputScheduler inputScheduler)
+        public GameController(RequestScheduler inputScheduler)
         {
-            this.logger = logger;
             tcpListener = new TcpListener(IPAddress.Any, port);
             scheduler = inputScheduler;
-            listenerThread = new Thread(new ThreadStart(ListenForClients));
-            listenerThread.Start();
-
-            logger.LogInformation($"GameController has finished constructing.");
+            Logger.Info($"{GetType().Name} has finished constructing.");
         }
 
-        private void ListenForClients()
+        public void Start()
         {
-            tcpListener.Start();
-            logger.LogInformation($"Client Listener started on port {port}");
-
-            while (true)
+            if(listenerThread == null)
             {
-                TcpClient client = tcpListener.AcceptTcpClient();
-                lock(connectionLock)
-                {
-                    if (numConnections >= maxConnections) continue;
-                    else numConnections++;
-                }
-                logger.LogInformation($"Client connected from: {((IPEndPoint)client.Client.RemoteEndPoint).Address}");
-
-                Thread clientThread = new (new ParameterizedThreadStart(HandleClientComm));
-                clientThread.Start(client);
+                isListening = true;
+                listenerThread = new Thread(new ThreadStart(ListenForClients));
+                listenerThread.Start();
+                Logger.Info($"{GetType().Name} has started on port {port}.");
+            } else
+            {
+                Logger.Warn($"{GetType().Name} is already running.");
             }
         }
 
-        private void HandleClientComm(object? client)
+        public void Stop()
         {
-            if (client == null) return;
-            TcpClient tcpClient = (TcpClient)client;
-            NetworkStream clientStream = tcpClient.GetStream();
-            var rateLimiter = new RateLimiter(threshold: AppSettings.GetValue<int>("Server:TickRate"), TimeSpan.FromSeconds(1));
-
-            while (true)
+            if(listenerThread != null)
             {
-                // Disconnect client if they are sending too many requests
-                if (!rateLimiter.CheckLimit()) break;
+                isListening = false;
+                listenerThread.Join();
+                Logger.Info($"{GetType().Name} has stopped listening.");
+            }
+        }
 
-                byte[] message = new byte[4096];
-                int bytesRead;
+        public void ListenForClients()
+        {
+            tcpListener.Start();
+
+            while (isListening)
+            {
+                TcpClient client = tcpListener.AcceptTcpClient();
 
                 try
                 {
-                    bytesRead = clientStream.Read(message, 0, 4096);
+                    VerifyCapacity();
+                    Thread clientThread = new(new ParameterizedThreadStart(HandleClientComm));
+                    clientThread.Start(client);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError($"Exception while reading from client stream: {ex.Message}");
-                    break;
+                    var errorResponse = ResponseBuilder.CreateErrorResponse(ex.Message);
+                    client.GetStream().Write(SocketIO.ObjectToByteArray(errorResponse));
+                    client.Close();
                 }
-
-                if (bytesRead == 0)
-                {
-                    // Client disconnected
-                    break;
-                }
-
-                // Convert the byte array into a string
-                string data = Encoding.ASCII.GetString(message, 0, bytesRead);
-                logger.LogInformation($"Received data: {data}");
-
-                // Deserialize the received message into an object
-                InputObject? input = JsonConvert.DeserializeObject<InputObject>(data);
-                if (input == null) { continue; }
-
-                // Add the input to the scheduler
-                scheduler.EnqueueInput(input);
             }
 
-            tcpClient.Close();
-            lock (connectionLock)
-            {
-                numConnections--;
-            }
+            tcpListener.Stop();
         }
 
+        public async void HandleClientComm(object? client)
+        {
+            // Validate Client
+            if (client == null) return;
+            TcpClient tcpClient = (TcpClient)client;
+            var greeting = ReadGreeting(tcpClient);
+            var token = await FirebaseService.ValidateSessionTokenAsync(greeting.SessionId);
+            
+            // Add Client to connections
+            Interlocked.Increment(ref numConnections); // TODO this needs to happen atomically with the capacity check
+            Logger.Info($"Client connected from: {((IPEndPoint)tcpClient.Client.RemoteEndPoint).Address}");
+            
+            // Build ConnectedUser object and start reading from the client
+            NetworkStream clientStream = tcpClient.GetStream();
+            var user = new ConnectedUser(token.Uid, greeting.SessionId);
+            user.HandleConnection(clientStream, scheduler);
+
+            // Cleanup
+            Logger.Info($"Client {((IPEndPoint)tcpClient.Client.RemoteEndPoint).Address} disconnected.");
+            tcpClient.Close();
+            Interlocked.Decrement(ref numConnections);
+        }
+
+        public GreetingRequest ReadGreeting(TcpClient client)
+        {
+            NetworkStream clientStream = client.GetStream();
+
+            byte[] greetingMessage = new byte[4096];
+            int greetingBytesRead = clientStream.Read(greetingMessage, 0, 4096);
+            if (greetingBytesRead == 0){ /*Client disconnected */ }
+
+            var message = Encoding.ASCII.GetString(greetingMessage, 0, greetingBytesRead);
+            Logger.Info($"Received greeting: {message}");
+            IRequest request = SocketIO.ReadAndDeserialize<IRequest>(message);
+
+            if (request is GreetingRequest)
+            {
+                return (GreetingRequest)request;
+            }
+            throw new BadGreetingException($"Request was not of type GreetingRequest.");
+        }
+
+        public void VerifyCapacity()
+        {
+            // Check if server has room
+            if (Interlocked.Read(ref numConnections) >= maxConnections) throw new Exception("Server is full");
+        }
     }
 }

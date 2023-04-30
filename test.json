@@ -1,0 +1,14 @@
+{
+	"Users": {
+		"TestUser": {
+			"Username": "TestUser",
+			"DateCreated": "Some Date",
+			"Characters": {
+				"WarriorGuy": {
+					"Constitution": 100,
+					"Strength": 75
+				}
+			}
+		}
+	}
+}
