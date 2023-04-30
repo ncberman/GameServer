@@ -1,5 +1,4 @@
 ﻿using Common.Logging;
-using GameLibrary;
 using GameLibrary.Request;
 using GameServer.Source.Exceptions;
 using GameServer.Source.Models;
@@ -18,7 +17,7 @@ namespace GameServer.Source
         private static readonly ILog Logger = LogManager.GetLogger<ConnectedUser>();
 
         readonly TcpListener tcpListener;
-        Thread listenerThread;
+        Thread? listenerThread = null;
         readonly RequestScheduler scheduler;
         readonly int port = AppSettings.GetValue<Int32>("Server:Port");
 

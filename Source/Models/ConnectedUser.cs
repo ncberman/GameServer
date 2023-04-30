@@ -1,5 +1,6 @@
 ﻿using Common.Logging;
 using GameLibrary;
+using GameLibrary.Request;
 using GameServer.Source.Exceptions;
 using GameServer.Source.Models.Database;
 using GameServer.Source.Services;
@@ -42,12 +43,12 @@ namespace GameServer.Source.Models
                 var bytesRead = networkStream.Read(message, 0, 4096);
                 if (bytesRead == 0) { Logger.Info($"User disconnected: {UserId}"); break; }
 
-                ServerRequest input = SocketIO.ReadAndDeserialize<ServerRequest>(Encoding.ASCII.GetString(message, 0, bytesRead));
-                if(input.SessionId != SessionId) { throw new BadSessionException("Unexpected session token"); }
-                Logger.Info($"Request received {JsonConvert.SerializeObject(input)}");
+                IRequest request = SocketIO.ReadAndDeserialize<IRequest>(Encoding.ASCII.GetString(message, 0, bytesRead));
+                if(request.SessionId != SessionId) { throw new BadSessionException("Unexpected session token"); }
+                Logger.Info($"Request received {JsonConvert.SerializeObject(request)}");
 
                 LastInput = DateTime.UtcNow;
-                requestScheduler.EnqueueInput(input);
+                requestScheduler.EnqueueInput(request);
             }
         }
 
