@@ -1,4 +1,4 @@
-﻿namespace GameServer.Source
+﻿namespace GameServer.Source.Util
 {
     public static class AppSettings
     {
