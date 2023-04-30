@@ -1,5 +1,6 @@
 ﻿using Common.Logging;
 using GameLibrary;
+using GameLibrary.Request;
 using GameServer.Source.Models;
 
 namespace GameServer.Source
@@ -8,7 +9,7 @@ namespace GameServer.Source
     {
         private static readonly ILog Logger = LogManager.GetLogger<ConnectedUser>();
 
-        readonly Queue<ServerRequest> requestQueue;
+        readonly Queue<IRequest> requestQueue;
         readonly int diagnosticInterval;
         int requestCount;
 
@@ -16,7 +17,7 @@ namespace GameServer.Source
 
         public RequestScheduler()
         {
-            requestQueue = new Queue<ServerRequest>();
+            requestQueue = new Queue<IRequest>();
             diagnosticInterval = 60;
             Logger.Info($"{GetType().Name} has finished constructing.");
         }
@@ -36,7 +37,7 @@ namespace GameServer.Source
             }
         }
 
-        public void EnqueueInput(ServerRequest input)
+        public void EnqueueInput(IRequest input)
         {
             lock (queueLock)
             {
@@ -45,7 +46,7 @@ namespace GameServer.Source
             }
         }
 
-        public Queue<ServerRequest> DequeueInput()
+        public Queue<IRequest> DequeueInput()
         {
             lock (queueLock)
             {
