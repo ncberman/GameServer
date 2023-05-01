@@ -1,4 +1,4 @@
-﻿using GameLibrary;
+﻿using GameLibrary.Response;
 
 namespace GameServer.Source.Util
 {
@@ -6,11 +6,9 @@ namespace GameServer.Source.Util
     {
         public static ServerResponse CreateErrorResponse(string message)
         {
-            var RS = new ServerResponse();
-            RS.ResponseTypeEnum = ResponseTypeEnum.ERROR;
-            var errRS = new ErrorResponse();
-            errRS.Message = message;
-            RS.Response = errRS;
+            var RS = new ServerResponse(
+                    new ErrorResponse(message)
+                );
             return RS;
         }
     }
