@@ -22,11 +22,13 @@ namespace GameServer.Source.Models
 
         public DateTime? LastInput { get; set; }
 
-        public ConnectedUser (string userId, string sessionId)
+        public ConnectedUser (string userId, string username, string sessionId)
         {
-            UserId = userId;
+            var user = AddOrRetrieveUser(userId, username).Result;
+            UserId = user.UserId;
+            Username = user.Username;
+
             SessionId = sessionId;
-            var user = AddOrRetrieveUser().Result;
         }
 
         public void HandleConnection(NetworkStream networkStream, RequestScheduler requestScheduler)
@@ -40,10 +42,10 @@ namespace GameServer.Source.Models
                 if (!rateLimiter.CheckLimit()) break;
 
                 byte[] message = new byte[4096];
-                var bytesRead = networkStream.Read(message, 0, 4096);
+                var bytesRead = NetworkStream.Read(message, 0, 4096);
                 if (bytesRead == 0) { Logger.Info($"User disconnected: {UserId}"); break; }
 
-                IRequest request = SocketIO.ReadAndDeserialize<IRequest>(Encoding.ASCII.GetString(message, 0, bytesRead));
+                ServerRequest request = SocketIO.ReadAndDeserialize<ServerRequest>(Encoding.ASCII.GetString(message, 0, bytesRead));
                 if(request.SessionId != SessionId) { throw new BadSessionException("Unexpected session token"); }
                 Logger.Info($"Request received {JsonConvert.SerializeObject(request)}");
 
@@ -52,20 +54,28 @@ namespace GameServer.Source.Models
             }
         }
 
-        private async Task<User> AddOrRetrieveUser()
+        private async Task<User> AddOrRetrieveUser(string userId, string username)
         {
-            var dbRef = new FirebaseRealtimeDatabase();
-            var user = await dbRef.GetDataAsync<User>(String.Format(Constants.USER_DIR, UserId));
-            if (user == null)
+            try
             {
-                user = new()
+                var dbRef = new FirebaseRealtimeDatabase();
+                var user = await dbRef.GetDataAsync<User>($"users/user_{UserId}");
+                if (user == null)
                 {
-                    UserId = UserId,
-                    Username = Username
-                };
-                await dbRef.AddDataAsync($"users/", $"user_{user.UserId}", user);
+                    user = new()
+                    {
+                        UserId = userId,
+                        Username = username
+                    };
+                    await dbRef.AddDataAsync($"users/", $"user_{user.UserId}", user);
+                }
+                return user;
             }
-            return user;
+            catch(Exception ex)
+            {
+                Logger.Error(ex.Message);
+            }
+            throw new Exception();
         }
     }
 }

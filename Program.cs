@@ -43,7 +43,7 @@ public class Program
         requestHandler?.Start();
         gameController?.Start();
 
-        DoSomething();
+        //DoSomething();
         Thread.Sleep(10000);
     }
 
@@ -51,8 +51,8 @@ public class Program
     {
         var db = new FirebaseRealtimeDatabase();
         var user = new User();
-        user.UserName = "Test";
-        user.ClientId = Guid.NewGuid().ToString();
+        user.Username = "Test";
+        user.UserId = Guid.NewGuid().ToString();
         await db.AddDataAsync("users/4b4f8840-ba09-4eb1-87c3-82d09262601e/characters", "WarriorGuy", Guid.NewGuid().ToString());
     }
 }

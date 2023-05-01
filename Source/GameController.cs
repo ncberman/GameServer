@@ -1,13 +1,12 @@
 ﻿using Common.Logging;
 using GameLibrary.Request;
+using GameLibrary.Response;
 using GameServer.Source.Exceptions;
 using GameServer.Source.Models;
 using GameServer.Source.Services;
 using GameServer.Source.Util;
-using Newtonsoft.Json;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.ConstrainedExecution;
 using System.Text;
 
 namespace GameServer.Source
@@ -95,7 +94,7 @@ namespace GameServer.Source
             
             // Build ConnectedUser object and start reading from the client
             NetworkStream clientStream = tcpClient.GetStream();
-            var user = new ConnectedUser(token.Uid, greeting.SessionId);
+            var user = new ConnectedUser(token.Uid, ((GreetingRequest)greeting.Request).Username, greeting.SessionId);
             user.HandleConnection(clientStream, scheduler);
 
             // Cleanup
@@ -104,7 +103,7 @@ namespace GameServer.Source
             Interlocked.Decrement(ref numConnections);
         }
 
-        public GreetingRequest ReadGreeting(TcpClient client)
+        public ServerRequest ReadGreeting(TcpClient client)
         {
             NetworkStream clientStream = client.GetStream();
 
@@ -114,11 +113,13 @@ namespace GameServer.Source
 
             var message = Encoding.ASCII.GetString(greetingMessage, 0, greetingBytesRead);
             Logger.Info($"Received greeting: {message}");
-            IRequest request = SocketIO.ReadAndDeserialize<IRequest>(message);
+            ServerRequest request = SocketIO.ReadAndDeserialize<ServerRequest>(message);
 
-            if (request is GreetingRequest)
+            if (request.Request.RequestType is RequestType.GREETING)
             {
-                return (GreetingRequest)request;
+                var greetingResponse = new ServerResponse(new GreetingResponse("Greeting Accepted!"));
+                clientStream.Write(SocketIO.ObjectToByteArray(greetingResponse));
+                return request;
             }
             throw new BadGreetingException($"Request was not of type GreetingRequest.");
         }

@@ -15,8 +15,6 @@ namespace GameServer.Source.Services
 
         public FirebaseRealtimeDatabase()
         {
-            // Initialize Firebase Realtime Database
-            Console.WriteLine(AppSettings.GetValue<string>("Firebase:Database:Url"));
             firebase = new FirebaseClient(AppSettings.GetValue<string>("Firebase:Database:Url"));
         }
 

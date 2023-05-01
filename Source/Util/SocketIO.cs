@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using GameLibrary.Request.Util;
+using Newtonsoft.Json;
 using System.Text;
 
 namespace GameServer.Source.Util
@@ -7,7 +8,9 @@ namespace GameServer.Source.Util
     {
         public static T ReadAndDeserialize<T>(string message)
         {
-            T? input = JsonConvert.DeserializeObject<T>(message);
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.Converters.Add(new RequestConverter());
+            T? input = JsonConvert.DeserializeObject<T>(message, settings);
             if (input == null) { throw new Exception(); }
             return input;
         }
