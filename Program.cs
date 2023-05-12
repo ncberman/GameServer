@@ -23,9 +23,9 @@ public class Program
         var builder = Host.CreateDefaultBuilder(args)
             .ConfigureServices((hostContext, services) =>
             {
-                services.AddSingleton<GameController>();
-                services.AddSingleton<RequestHandler>();
-                services.AddSingleton<RequestScheduler>();
+                services.AddSingleton<ServerController>();
+                services.AddSingleton<TickBasedHandler>();
+                services.AddSingleton<TickBasedScheduler>();
             });
 
         FirebaseApp.Create(new AppOptions()
@@ -34,9 +34,9 @@ public class Program
         });
 
         var host = builder.Build();
-        var gameController = host.Services.GetService<GameController>();
-        var requestScheduler = host.Services.GetService<RequestScheduler>();
-        var requestHandler = host.Services.GetService<RequestHandler>();
+        var gameController = host.Services.GetService<ServerController>();
+        var requestScheduler = host.Services.GetService<TickBasedScheduler>();
+        var requestHandler = host.Services.GetService<TickBasedHandler>();
 
         // TODO fail program if any of these are null
         requestScheduler?.EnableDiagnostics();

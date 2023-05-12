@@ -4,13 +4,13 @@ using GameServer.Source.Util;
 
 namespace GameServer.Source
 {
-    public sealed class RequestHandler
+    public sealed class TickBasedHandler
     {
-        private static readonly ILog Logger = LogManager.GetLogger<RequestHandler>();
+        private static readonly ILog Logger = LogManager.GetLogger<TickBasedHandler>();
 
-        readonly RequestScheduler scheduler;
+        readonly TickBasedScheduler scheduler;
 
-        public RequestHandler(RequestScheduler inputScheduler)
+        public TickBasedHandler(TickBasedScheduler inputScheduler)
         {
             scheduler = inputScheduler;
             Logger.Info($"{GetType().Name} has finished constructing.");

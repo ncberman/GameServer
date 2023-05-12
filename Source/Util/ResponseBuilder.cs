@@ -1,4 +1,5 @@
 ﻿using GameLibrary.Response;
+using GameLibrary.Response.Util;
 
 namespace GameServer.Source.Util
 {
@@ -7,7 +8,7 @@ namespace GameServer.Source.Util
         public static ServerResponse CreateErrorResponse(string message)
         {
             var RS = new ServerResponse(
-                    new ErrorResponse(message)
+                    new ErrorResponse(ResponseStatus.OK, message)
                 );
             return RS;
         }

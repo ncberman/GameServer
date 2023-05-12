@@ -1,6 +1,7 @@
 ﻿using Common.Logging;
 using GameLibrary.Request;
 using GameLibrary.Response;
+using GameLibrary.Response.Util;
 using GameServer.Source.Exceptions;
 using GameServer.Source.Models;
 using GameServer.Source.Services;
@@ -11,20 +12,20 @@ using System.Text;
 
 namespace GameServer.Source
 {
-    public sealed class GameController
+    public sealed class ServerController
     {
-        private static readonly ILog Logger = LogManager.GetLogger<ConnectedUser>();
+        private static readonly ILog Logger = LogManager.GetLogger<ClientController>();
 
         readonly TcpListener tcpListener;
         Thread? listenerThread = null;
-        readonly RequestScheduler scheduler;
+        readonly TickBasedScheduler scheduler;
         readonly int port = AppSettings.GetValue<Int32>("Server:Port");
 
         long numConnections;
         bool isListening = false;
         readonly long maxConnections = AppSettings.GetValue<Int32>("Server:MaxConnections");
 
-        public GameController(RequestScheduler inputScheduler)
+        public ServerController(TickBasedScheduler inputScheduler)
         {
             tcpListener = new TcpListener(IPAddress.Any, port);
             scheduler = inputScheduler;
@@ -85,7 +86,17 @@ namespace GameServer.Source
             // Validate Client
             if (client == null) return;
             TcpClient tcpClient = (TcpClient)client;
-            var greeting = ReadGreeting(tcpClient);
+            ServerRequest greeting;
+            try
+            {
+                greeting = ReadGreeting(tcpClient);
+            } catch (Exception ex)
+            {
+                var errRS = ResponseBuilder.CreateErrorResponse(ex.Message);
+                tcpClient.GetStream().Write(SocketIO.ObjectToByteArray((errRS)));
+                tcpClient.Close();
+                return;
+            }
             var token = await FirebaseService.ValidateSessionTokenAsync(greeting.SessionId);
             
             // Add Client to connections
@@ -94,7 +105,7 @@ namespace GameServer.Source
             
             // Build ConnectedUser object and start reading from the client
             NetworkStream clientStream = tcpClient.GetStream();
-            var user = new ConnectedUser(token.Uid, ((GreetingRequest)greeting.Request).Username, greeting.SessionId);
+            var user = new ClientController(token.Uid, ((GreetingRequest)greeting.Request).Username, greeting.SessionId);
             user.HandleConnection(clientStream, scheduler);
 
             // Cleanup
@@ -109,7 +120,7 @@ namespace GameServer.Source
 
             byte[] greetingMessage = new byte[4096];
             int greetingBytesRead = clientStream.Read(greetingMessage, 0, 4096);
-            if (greetingBytesRead == 0){ /*Client disconnected */ }
+            if (greetingBytesRead == 0) { /* Client disconnected */ }
 
             var message = Encoding.ASCII.GetString(greetingMessage, 0, greetingBytesRead);
             Logger.Info($"Received greeting: {message}");
@@ -117,10 +128,11 @@ namespace GameServer.Source
 
             if (request.Request.RequestType is RequestType.GREETING)
             {
-                var greetingResponse = new ServerResponse(new GreetingResponse("Greeting Accepted!"));
+                var greetingResponse = new ServerResponse(new GreetingResponse(ResponseStatus.OK, "Greeting Accepted!"));
                 clientStream.Write(SocketIO.ObjectToByteArray(greetingResponse));
                 return request;
             }
+
             throw new BadGreetingException($"Request was not of type GreetingRequest.");
         }
 
