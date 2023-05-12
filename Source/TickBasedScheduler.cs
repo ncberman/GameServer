@@ -5,9 +5,9 @@ using GameServer.Source.Models;
 
 namespace GameServer.Source
 {
-    public sealed class RequestScheduler
+    public sealed class TickBasedScheduler
     {
-        private static readonly ILog Logger = LogManager.GetLogger<ConnectedUser>();
+        private static readonly ILog Logger = LogManager.GetLogger<ClientController>();
 
         readonly Queue<ServerRequest> requestQueue;
         readonly int diagnosticInterval;
@@ -15,7 +15,7 @@ namespace GameServer.Source
 
         readonly object queueLock = new object();
 
-        public RequestScheduler()
+        public TickBasedScheduler()
         {
             requestQueue = new Queue<ServerRequest>();
             diagnosticInterval = 60;
