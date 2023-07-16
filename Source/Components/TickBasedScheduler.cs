@@ -3,7 +3,7 @@ using GameLibrary;
 using GameLibrary.Request;
 using GameServer.Source.Models;
 
-namespace GameServer.Source
+namespace GameServer.Source.Components
 {
     public sealed class TickBasedScheduler
     {
@@ -30,7 +30,7 @@ namespace GameServer.Source
 
         private void ReportDiagnostics(object? state)
         {
-            lock(queueLock)
+            lock (queueLock)
             {
                 Logger.Info($"Received {requestCount} inputs in the last {diagnosticInterval}s.");
                 requestCount = 0;
