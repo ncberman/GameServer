@@ -12,7 +12,7 @@ namespace GameServer.Source.Handlers
             switch (request.Request.RequestType)
             {
                 case RequestType.CHARACTER_CREATE:
-                    return new CharacterCreateHandler();
+                    return new RetrieveCharacterHandler();
 
                 case RequestType.CHAT:
                     return new ChatHandler();

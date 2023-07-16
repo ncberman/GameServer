@@ -2,7 +2,7 @@
 using GameServer.Source.Models;
 using GameServer.Source.Util;
 
-namespace GameServer.Source
+namespace GameServer.Source.Components
 {
     public sealed class TickBasedHandler
     {
@@ -26,7 +26,7 @@ namespace GameServer.Source
         // Starts a timer using the tickrate defined in the settings to process the inputs from the RequestScheduler
         void StartProcessing()
         {
-            var tickRate = (1/AppSettings.GetValue<double>("Server:TickRate"));
+            var tickRate = 1 / AppSettings.GetValue<double>("Server:TickRate");
             var tickTimer = new Timer(ProcessInputs, null, TimeSpan.Zero, TimeSpan.FromSeconds(tickRate));
         }
 
