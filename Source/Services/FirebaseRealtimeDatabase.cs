@@ -45,9 +45,9 @@ namespace GameServer.Source.Services
             return result;
         }
 
-        public async Task AddDataAsync(string path, string key, object data)
+        public async Task AddDataAsync(string path, object data)
         {
-            await firebase.Child(path).Child(key).PutAsync(data);
+            await firebase.Child(path).PostAsync(data);
         }
     }
 }
