@@ -1,9 +1,10 @@
 ﻿using GameLibrary.Request;
+using GameLibrary.Response;
 
 namespace GameServer.Source.Models
 {
     public interface IRealtimeHandler
     {
-        void HandleRequest(ServerRequest request, string userId);
+        Task<ServerResponse> HandleRequest(ServerRequest request, string userId);
     }
 }

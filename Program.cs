@@ -1,12 +1,12 @@
 using Common.Logging.Serilog;
 using Common.Logging;
 using FirebaseAdmin;
-using GameServer.Source;
 using Google.Apis.Auth.OAuth2;
 using Serilog;
 using GameServer.Source.Services;
 using GameServer.Source.Models.Database;
 using Firebase.Database;
+using GameServer.Source.Components;
 
 public class Program
 {
@@ -24,6 +24,7 @@ public class Program
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddSingleton<ServerController>();
+                services.AddSingleton<PlayerManager>();
                 services.AddSingleton<TickBasedHandler>();
                 services.AddSingleton<TickBasedScheduler>();
             });
@@ -34,25 +35,22 @@ public class Program
         });
 
         var host = builder.Build();
-        var gameController = host.Services.GetService<ServerController>();
-        var requestScheduler = host.Services.GetService<TickBasedScheduler>();
-        var requestHandler = host.Services.GetService<TickBasedHandler>();
+        var serverController = host.Services.GetService<ServerController>();
+        var tickRequestScheduler = host.Services.GetService<TickBasedScheduler>();
+        var tickRequestHandler = host.Services.GetService<TickBasedHandler>();
 
         // TODO fail program if any of these are null
-        requestScheduler?.EnableDiagnostics();
-        requestHandler?.Start();
-        gameController?.Start();
-
-        //DoSomething();
-        Thread.Sleep(10000);
+        tickRequestScheduler?.EnableDiagnostics();
+        tickRequestHandler?.Start();
+        serverController?.Start();
     }
 
-    public static async void DoSomething()
-    {
-        var db = new FirebaseRealtimeDatabase();
-        var user = new User();
-        user.Username = "Test";
-        user.UserId = Guid.NewGuid().ToString();
-        await db.AddDataAsync("users/4b4f8840-ba09-4eb1-87c3-82d09262601e/characters", "WarriorGuy", Guid.NewGuid().ToString());
-    }
+    //public static async void DoSomething()
+    //{
+    //    var db = new FirebaseRealtimeDatabase();
+    //    var user = new DatabaseUser();
+    //    user.Username = "Test";
+    //    user.UserId = Guid.NewGuid().ToString();
+    //    await db.AddDataAsync("users/4b4f8840-ba09-4eb1-87c3-82d09262601e/characters", "WarriorGuy", Guid.NewGuid().ToString());
+    //}
 }

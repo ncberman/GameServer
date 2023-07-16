@@ -3,6 +3,7 @@ using GameLibrary;
 using GameServer.Source.Exceptions;
 using Common.Logging;
 using GameServer.Source.Models.Database;
+using GameServer.Source.Util;
 
 namespace GameServer.Source.Services
 {
@@ -30,14 +31,13 @@ namespace GameServer.Source.Services
         {
             FirebaseRealtimeDatabase realtimeDatabase = new();
             var data = await realtimeDatabase.GetDataAsync<T>(path);
-            if (data == null) throw new DataNotFoundException($"No object of type {typeof(T)} at {path}");
-            return data;
+            return data == null ? throw new DataNotFoundException($"No object of type {typeof(T)} at {path}") : data;
         }
 
-        public static async Task<User> AddOrRetrieveUser(string userId, string username)
+        public static async Task<DatabaseUser> AddOrRetrieveUser(string userId, string username)
         {
             var realtimeDatabase = new FirebaseRealtimeDatabase();
-            var user = await realtimeDatabase.GetDataAsync<User>($"users/user_{userId}");
+            var user = await realtimeDatabase.GetDataAsync<DatabaseUser>($"users/user_{userId}");
             if (user == null)
             {
                 user = new()
@@ -45,7 +45,7 @@ namespace GameServer.Source.Services
                     UserId = userId,
                     Username = username
                 };
-                await realtimeDatabase.AddDataAsync($"users/", $"user_{user.UserId}", user);
+                await realtimeDatabase.AddDataAsync(string.Format(Constants.USER_DIR, userId), user);
             }
             return user;
         }
