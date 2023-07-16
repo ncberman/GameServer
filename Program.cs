@@ -31,7 +31,7 @@ public class Program
 
         FirebaseApp.Create(new AppOptions()
         {
-            Credential = GoogleCredential.FromFile("/app/keyfile.json"),
+            Credential = GoogleCredential.FromFile("/run/secrets/TribalGamesFirebase_Auth"),
         });
 
         var host = builder.Build();
