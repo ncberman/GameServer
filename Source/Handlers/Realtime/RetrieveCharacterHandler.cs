@@ -17,7 +17,7 @@ namespace GameServer.Source.Handlers.Realtime
             {
                 // TODO close db lock
 
-                var retrieveCharacter = (CreateCharacterRequest)request.Request;
+                var retrieveCharacter = (RetrieveCharacterRequest)request.Request;
                 var user = FirebaseService.RetrieveData<DatabaseUser>(string.Format(Constants.USER_DIR, userId)).Result;
 
                 if (!user.Characters.Contains(retrieveCharacter.CharacterName)) 
@@ -31,7 +31,7 @@ namespace GameServer.Source.Handlers.Realtime
                     return ResponseBuilder.CreateErrorResponse(request, $"No character exists with name {retrieveCharacter.CharacterName}");
                 }
 
-                var retrieveCharacterResponse = new RetrieveCharacterResponse(ResponseStatus.OK, $"{retrieveCharacter.CharacterName} created successfully.", character);
+                var retrieveCharacterResponse = new RetrieveCharacterResponse(ResponseStatus.OK, $"{retrieveCharacter.CharacterName} retrieved successfully.", character);
                 var serverResponse = new ServerResponse(request.CorrelationId, retrieveCharacterResponse);
 
                 // Open db lock

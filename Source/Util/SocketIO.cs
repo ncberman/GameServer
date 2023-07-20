@@ -12,8 +12,7 @@ namespace GameServer.Source.Util
             JsonSerializerSettings settings = new JsonSerializerSettings();
             settings.Converters.Add(new RequestConverter());
             T? input = JsonConvert.DeserializeObject<T>(message, settings);
-            if (input == null) { throw new Exception(); }
-            return input;
+            return input == null ? throw new Exception() : input;
         }
 
         public static byte[] ObjectToByteArray(object obj)

@@ -51,7 +51,7 @@ namespace GameServer.Source.Models
                     byte[] message = new byte[4096];
                     var bytesRead = await Stream.ReadAsync(message.AsMemory(0, 4096));
                     if (bytesRead == 0) { Logger.Info($"User disconnected: {UserId}"); break; }
-
+                    
                     ServerRequest request = SocketIO.ReadAndDeserialize<ServerRequest>(Encoding.ASCII.GetString(message, 0, bytesRead));
                     if (request.SessionId != SessionId) { throw new BadSessionException("Unexpected session token"); }
                     Logger.Info($"Request received {JsonConvert.SerializeObject(request)}");
@@ -60,7 +60,9 @@ namespace GameServer.Source.Models
                     if (request.Request is IRealtimeRequest)
                     {
                         IRealtimeHandler handler = RealtimeHandlerFactory.GetHandler(request);
-                        //handler.HandleRequest();
+                        var response = await handler.HandleRequest(request, UserId);
+                        await Stream.WriteAsync(SocketIO.ObjectToByteArray(response));
+                        Logger.Info($"Response sent {JsonConvert.SerializeObject(response)}");
                     }
                     else if (request.Request is ITickBasedRequest)
                     {

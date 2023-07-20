@@ -3,8 +3,10 @@ using Firebase.Database.Query;
 using FirebaseAdmin.Auth;
 using GameServer.Source.Util;
 using Google.Apis.Auth.OAuth2;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace GameServer.Source.Services
@@ -47,7 +49,7 @@ namespace GameServer.Source.Services
 
         public async Task AddDataAsync(string path, object data)
         {
-            await firebase.Child(path).PostAsync(data);
+            await firebase.Child(path).PutAsync(data);
         }
     }
 }

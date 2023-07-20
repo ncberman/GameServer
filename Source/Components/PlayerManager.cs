@@ -1,4 +1,5 @@
-﻿using GameLibrary.Request;
+﻿using Common.Logging;
+using GameLibrary.Request;
 using GameServer.Source.Models;
 using GameServer.Source.Services;
 using System.Collections.Concurrent;
@@ -7,6 +8,7 @@ namespace GameServer.Source.Components
 {
     public class PlayerManager
     {
+        private static readonly ILog Logger = LogManager.GetLogger<PlayerManager>();
         private static readonly Lazy<PlayerManager> lazyInstance = new(() => new PlayerManager());
         public static PlayerManager Instance => lazyInstance.Value;
 
@@ -22,9 +24,11 @@ namespace GameServer.Source.Components
             if(ConnectedPlayers.TryAdd(uid, newClient))
             {
                 await newClient.HandleConnection();
+                ConnectedPlayers.Remove(uid, out _);
             } 
             else 
             {
+                Logger.Info($"Player {uid} is already connected!");
                 // This account is already connected
             }
         }

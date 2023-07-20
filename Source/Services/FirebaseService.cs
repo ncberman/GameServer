@@ -43,7 +43,8 @@ namespace GameServer.Source.Services
                 user = new()
                 {
                     UserId = userId,
-                    Username = username
+                    Username = username,
+                    CharacterLimit = 1
                 };
                 await realtimeDatabase.AddDataAsync(string.Format(Constants.USER_DIR, userId), user);
             }

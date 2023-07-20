@@ -80,16 +80,19 @@ namespace GameServer.Source.Handlers.Realtime
             {
                 _ = FirebaseService.RetrieveData<SharedCharacter>(string.Format(Constants.CHARACTER_DIR, charName)).Result;
             }
-            catch (DataNotFoundException)
+            catch (AggregateException e)
             {
-                return false;
+                if (e.InnerException?.GetType() == typeof(DataNotFoundException))
+                    return false;
+                else throw e;
             }
             return true;
         }
 
         private static bool IsNameInappropriate(string charName)
         {
-            return true;
+            if (charName.Length < 3) return true;
+            else return false;
         }
 
         private static bool DoesUserHaveEmptyCharacterSlot(DatabaseUser user)
