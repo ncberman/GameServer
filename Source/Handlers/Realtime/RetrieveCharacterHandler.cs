@@ -1,7 +1,6 @@
 ﻿using GameLibrary.Model;
 using GameLibrary.Request;
 using GameLibrary.Response;
-using GameLibrary.Response.Util;
 using GameServer.Source.Models;
 using GameServer.Source.Models.Database;
 using GameServer.Source.Services;
@@ -31,7 +30,7 @@ namespace GameServer.Source.Handlers.Realtime
                     return ResponseBuilder.CreateErrorResponse(request, $"No character exists with name {retrieveCharacter.CharacterName}");
                 }
 
-                var retrieveCharacterResponse = new RetrieveCharacterResponse(ResponseStatus.OK, $"{retrieveCharacter.CharacterName} retrieved successfully.", character);
+                var retrieveCharacterResponse = new RetrieveCharacterResponse("{retrieveCharacter.CharacterName} retrieved successfully.", character);
                 var serverResponse = new ServerResponse(request.CorrelationId, retrieveCharacterResponse);
 
                 // Open db lock

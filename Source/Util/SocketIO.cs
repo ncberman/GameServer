@@ -7,17 +7,20 @@ namespace GameServer.Source.Util
 {
     public static class SocketIO
     {
+        public static readonly JsonSerializerSettings settings = new()
+        {
+            TypeNameHandling = TypeNameHandling.Auto
+        };
+
         public static T ReadAndDeserialize<T>(string message)
         {
-            JsonSerializerSettings settings = new JsonSerializerSettings();
-            settings.Converters.Add(new RequestConverter());
             T? input = JsonConvert.DeserializeObject<T>(message, settings);
             return input == null ? throw new Exception() : input;
         }
 
         public static byte[] ObjectToByteArray(object obj)
         {
-            var json = JsonConvert.SerializeObject(obj);
+            var json = JsonConvert.SerializeObject(obj, settings);
             return Encoding.ASCII.GetBytes(json);
         }
     }

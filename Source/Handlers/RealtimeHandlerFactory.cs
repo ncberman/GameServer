@@ -9,22 +9,22 @@ namespace GameServer.Source.Handlers
     {
         public static IRealtimeHandler GetHandler(ServerRequest request)
         {
-            switch (request.Request.RequestType)
+            switch (request.Request)
             {
-                case RequestType.CHARACTER_CREATE:
+                case CreateCharacterRequest:
                     return new CreateCharacterHandler();
 
-                case RequestType.CHARACTER_RETRIEVE:
+                case RetrieveCharacterRequest:
                     return new RetrieveCharacterHandler();
 
-                case RequestType.USER_RETRIEVE:
+                case RetrieveUserRequest:
                     return new RetrieveUserHandler();
 
-                case RequestType.CHAT:
-                    return new ChatHandler();
+                //case RequestType.CHAT:
+                //    return new ChatHandler();
 
                 default:
-                    throw new UnsupportedRequestTypeException(string.Format("RealtimeHandlerFactory can't handle request of type: {0}", request.Request.RequestType.ToString()));
+                    throw new UnsupportedRequestTypeException(string.Format("RealtimeHandlerFactory can't handle request of type: {0}", request.Request));
             }
         }
     }

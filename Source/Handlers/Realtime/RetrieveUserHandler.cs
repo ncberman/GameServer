@@ -1,7 +1,6 @@
 ﻿using GameLibrary.Model;
 using GameLibrary.Request;
 using GameLibrary.Response;
-using GameLibrary.Response.Util;
 using GameServer.Source.Exceptions;
 using GameServer.Source.Models;
 using GameServer.Source.Models.Database;
@@ -31,7 +30,7 @@ namespace GameServer.Source.Handlers.Realtime
                     return ResponseBuilder.CreateErrorResponse(request, $"Could not find user {retrieveRequest.UserId}");
                 }
 
-                var retrieveUserResponse = new RetrieveUserResponse(ResponseStatus.OK, $"{retrieveRequest.UserId} retrieved successfully.", sharedUser);
+                var retrieveUserResponse = new RetrieveUserResponse($"{retrieveRequest.UserId} retrieved successfully.", sharedUser);
                 var serverResponse = new ServerResponse(request.CorrelationId, retrieveUserResponse);
 
                 // Open db lock

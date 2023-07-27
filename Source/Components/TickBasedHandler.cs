@@ -13,7 +13,7 @@ namespace GameServer.Source.Components
         public TickBasedHandler(TickBasedScheduler inputScheduler)
         {
             scheduler = inputScheduler;
-            Logger.Info($"{GetType().Name} has finished constructing.");
+            Logger.Info($"{GetType().Name} constructed");
         }
 
         public void Start()

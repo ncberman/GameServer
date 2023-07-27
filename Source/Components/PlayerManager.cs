@@ -1,7 +1,5 @@
 ﻿using Common.Logging;
-using GameLibrary.Request;
 using GameServer.Source.Models;
-using GameServer.Source.Services;
 using System.Collections.Concurrent;
 
 namespace GameServer.Source.Components
@@ -12,7 +10,7 @@ namespace GameServer.Source.Components
         private static readonly Lazy<PlayerManager> lazyInstance = new(() => new PlayerManager());
         public static PlayerManager Instance => lazyInstance.Value;
 
-        ConcurrentDictionary<string, ClientController> ConnectedPlayers = new();
+        public readonly ConcurrentDictionary<string, ClientController> ConnectedPlayers = new();
 
         public PlayerManager() 
         {
@@ -31,6 +29,12 @@ namespace GameServer.Source.Components
                 Logger.Info($"Player {uid} is already connected!");
                 // This account is already connected
             }
+        }
+
+        public ClientController GetClientById(string id)
+        {
+            ConnectedPlayers.TryGetValue(id, out var client);
+            return client;
         }
     }
 }

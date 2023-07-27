@@ -4,13 +4,12 @@ using GameLibrary.Request.Util;
 using GameServer.Source.Components;
 using GameServer.Source.Exceptions;
 using GameServer.Source.Handlers;
-using GameServer.Source.Models.Database;
 using GameServer.Source.Services;
 using GameServer.Source.Util;
 using Newtonsoft.Json;
 using System.Net.Sockets;
 using System.Text;
-using System;
+using static Google.Rpc.Context.AttributeContext.Types;
 
 namespace GameServer.Source.Models
 {
@@ -54,7 +53,7 @@ namespace GameServer.Source.Models
                     
                     ServerRequest request = SocketIO.ReadAndDeserialize<ServerRequest>(Encoding.ASCII.GetString(message, 0, bytesRead));
                     if (request.SessionId != SessionId) { throw new BadSessionException("Unexpected session token"); }
-                    Logger.Info($"Request received {JsonConvert.SerializeObject(request)}");
+                    Logger.Info($"Request received {JsonConvert.SerializeObject(request, SocketIO.settings)}");
 
                     LastInput = DateTime.UtcNow;
                     if (request.Request is IRealtimeRequest)
@@ -62,7 +61,7 @@ namespace GameServer.Source.Models
                         IRealtimeHandler handler = RealtimeHandlerFactory.GetHandler(request);
                         var response = await handler.HandleRequest(request, UserId);
                         await Stream.WriteAsync(SocketIO.ObjectToByteArray(response));
-                        Logger.Info($"Response sent {JsonConvert.SerializeObject(response)}");
+                        Logger.Info($"Response sent {JsonConvert.SerializeObject(response, SocketIO.settings)}");
                     }
                     else if (request.Request is ITickBasedRequest)
                     {
@@ -79,6 +78,17 @@ namespace GameServer.Source.Models
                     break;
                 }
             }
+        }
+
+        public async Task SendMessage(object message)
+        {
+            if (Stream == null)
+            {
+                Logger.Error($"Tried to send message to client but NetworkStream was null\n{UserId}\n{JsonConvert.SerializeObject(message, SocketIO.settings)}");
+                return;
+            }
+
+            await Stream.WriteAsync(SocketIO.ObjectToByteArray(message));
         }
     }
 }

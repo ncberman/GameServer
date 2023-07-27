@@ -1,7 +1,6 @@
 ﻿using Common.Logging;
 using GameLibrary.Request;
 using GameLibrary.Response;
-using GameLibrary.Response.Util;
 using GameServer.Source.Exceptions;
 using GameServer.Source.Models;
 using GameServer.Source.Services;
@@ -40,7 +39,7 @@ namespace GameServer.Source.Components
             tcpListener = new TcpListener(IPAddress.Any, port);
             playerManager = PlayerManager.Instance;
             scheduler = tickBasedScheduler;
-            Logger.Info($"{GetType().Name} has finished constructing.");
+            Logger.Info($"{GetType().Name} constructed");
         }
 
         public void Start()
@@ -151,9 +150,9 @@ namespace GameServer.Source.Components
             Logger.Info($"Received greeting: {message}");
             ServerRequest request = SocketIO.ReadAndDeserialize<ServerRequest>(message);
 
-            if (request.Request.RequestType is RequestType.GREETING)
+            if (request.Request is GreetingRequest)
             {
-                var greetingResponse = new ServerResponse(request.CorrelationId, new GreetingResponse(ResponseStatus.OK, "Greeting Accepted!"));
+                var greetingResponse = new ServerResponse(request.CorrelationId, new GreetingResponse("Greeting Accepted!"));
                 await client.GetStream().WriteAsync(SocketIO.ObjectToByteArray(greetingResponse));
                 return request;
             }

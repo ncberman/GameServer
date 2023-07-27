@@ -1,7 +1,6 @@
 ﻿using GameLibrary.Model;
 using GameLibrary.Request;
 using GameLibrary.Response;
-using GameLibrary.Response.Util;
 using GameServer.Source.Exceptions;
 using GameServer.Source.Models;
 using GameServer.Source.Models.Database;
@@ -56,7 +55,7 @@ namespace GameServer.Source.Handlers.Realtime
                 // TODO validate 
                 if (!updatedUser.Result.Characters.Contains(CreateRequest.CharacterName)) { return ResponseBuilder.CreateErrorResponse(request, "Something failed with character creation."); }
 
-                var createCharacterResponse = new CreateCharacterResponse(ResponseStatus.OK, $"{CreateRequest.CharacterName} created successfully.", newCharacter.Result);
+                var createCharacterResponse = new CreateCharacterResponse($"{CreateRequest.CharacterName} created successfully.", newCharacter.Result);
                 var serverResponse = new ServerResponse(request.CorrelationId, createCharacterResponse);
 
                 // Open db lock

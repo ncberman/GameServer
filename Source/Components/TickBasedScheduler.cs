@@ -13,13 +13,13 @@ namespace GameServer.Source.Components
         readonly int diagnosticInterval;
         int requestCount;
 
-        readonly object queueLock = new object();
+        readonly object queueLock = new();
 
         public TickBasedScheduler()
         {
             requestQueue = new Queue<ServerRequest>();
             diagnosticInterval = 60;
-            Logger.Info($"{GetType().Name} has finished constructing.");
+            Logger.Info($"{GetType().Name} constructed");
         }
 
         public void EnableDiagnostics()

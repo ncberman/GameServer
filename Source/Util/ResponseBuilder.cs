@@ -1,6 +1,5 @@
 ﻿using GameLibrary.Request;
 using GameLibrary.Response;
-using GameLibrary.Response.Util;
 
 namespace GameServer.Source.Util
 {
@@ -10,7 +9,7 @@ namespace GameServer.Source.Util
         {
             var RS = new ServerResponse(
                     request.CorrelationId,
-                    new ErrorResponse(ResponseStatus.OK, message)
+                    new ErrorResponse(message)
                 );
             return RS;
         }
@@ -19,7 +18,7 @@ namespace GameServer.Source.Util
         {
             var RS = new ServerResponse(
                     Guid.NewGuid(),
-                    new ErrorResponse(ResponseStatus.OK, message)
+                    new ErrorResponse(message)
                 );
             return RS;
         }
